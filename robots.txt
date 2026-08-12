@@ -1,0 +1,4 @@
+User-agent: *
+Allow: /
+
+Sitemap: https://new-mom-survival-deck.vercel.app/sitemap.xml
