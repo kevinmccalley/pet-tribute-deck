@@ -184,6 +184,41 @@ const withBonus = buildDeckPdf(true);
 check(withBonus.totalCards === 38, `with-bonus deck is 38 cards (1 cover + 36 content + 1 bonus), got ${withBonus.totalCards}`);
 check(withBonus.leftoverOnLastPage === 2, `38 cards leaves exactly 4 open slots on the last page (2 used of 6), got ${withBonus.leftoverOnLastPage} used`);
 
+// --- 4. Cricut cut-file SVG export -----------------------------------------
+// Pulls the REAL slotXY/geometry straight out of app.js so the check is
+// against the actual shipped coordinates.
+const appJsSrc = fs.readFileSync(path.join(DIR, "app.js"), "utf8");
+function extractFn(src, name) {
+  const start = src.indexOf(`function ${name}`);
+  let depth = 0, i = src.indexOf("{", start);
+  for (; i < src.length; i++) {
+    if (src[i] === "{") depth++;
+    if (src[i] === "}") { depth--; if (depth === 0) { i++; break; } }
+  }
+  return src.slice(start, i);
+}
+const realSlotXYSrc = extractFn(appJsSrc, "slotXY");
+const COLS = 2, ROWS = 3;
+const MARGIN_X = 1.5, GAP_X = 0.5, MARGIN_Y = 0.2, GAP_Y = 0.05;
+const CARDS_PER_PAGE = COLS * ROWS;
+const cricutSandbox = { COLS, MARGIN_X, GAP_X, CARD_W, MARGIN_Y, GAP_Y, CARD_H, CARDS_PER_PAGE, selectedCards: pickCards(scoresFor([catIds[0], catIds[1], catIds[2]], [3, 2, 1])), petName: "Test Pet", bonusMessage: "" };
+vm.createContext(cricutSandbox);
+vm.runInContext(realSlotXYSrc, cricutSandbox, { filename: "app.js (slotXY)" });
+vm.runInContext(fs.readFileSync(path.join(DIR, "cricut-export.js"), "utf8"), cricutSandbox, { filename: "cricut-export.js" });
+const buildCutFileSVG = vm.runInContext("buildCutFileSVG", cricutSandbox);
+const realSlotXY = vm.runInContext("slotXY", cricutSandbox);
+
+const fullPageSVG = buildCutFileSVG(CARDS_PER_PAGE);
+check(fullPageSVG.startsWith("<?xml") && fullPageSVG.includes('width="8.5in" height="11in" viewBox="0 0 8.5 11"'), "Cricut SVG is well-formed and correctly sized");
+check((fullPageSVG.match(/<rect /g) || []).length === CARDS_PER_PAGE, `Cricut full-page rect count is ${CARDS_PER_PAGE}`);
+let slotMismatch = null;
+for (let pos = 0; pos < CARDS_PER_PAGE; pos++) {
+  const [x, y] = realSlotXY(pos);
+  if (!fullPageSVG.includes(`x="${x}" y="${y}" width="${CARD_W}" height="${CARD_H}"`)) { slotMismatch = pos; break; }
+}
+check(slotMismatch === null, "every Cricut cut outline matches app.js's real slotXY exactly" + (slotMismatch === null ? "" : ` (mismatch at pos ${slotMismatch})`));
+check(Math.ceil(noBonus.totalCards / CARDS_PER_PAGE) === Math.ceil((1 + cricutSandbox.selectedCards.length) / CARDS_PER_PAGE), "Cricut cut-file front-page count (no bonus) matches PDF's own front-page count (every page always full)");
+
 const outPath = path.join(DIR, "test-output.pdf");
 fs.writeFileSync(outPath, Buffer.from(withBonus.pdfDoc.output("arraybuffer")));
 console.log("Wrote " + outPath);
