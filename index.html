@@ -45,21 +45,19 @@
 <style>
   :root {
     color-scheme: light dark;
-    --bg: #529224; --surface: #5ea12e; --ink: #14210c; --ink-soft: #37501f;
-    --border: #375c1d; --accent: #375c1d; --accent-bright: #3f721b; --accent-soft: #e4edde;
+    --bg: #1f3614; --surface: #2d4a1e; --ink: #e5e7e4; --ink-soft: #b4bfae;
+    --border: #558a3b; --accent: #427d24; --accent-bright: #326717; --accent-soft: #e3edde;
   }
   @media (prefers-color-scheme: dark) {
     :root {
-      --bg: #17280b; --surface: #274313; --ink: #c1d6b2; --ink-soft: #85a56c;
-      --border: #3c671e; --accent-soft: #304521;
+      --bg: #101c0b; --surface: #1b2d12; --ink: #bcc1b9; --ink-soft: #8e9f85;
+      --border: #487432; --accent-soft: #324927;
     }
   }
   * { box-sizing: border-box; }
   body {
     font-family: -apple-system, Segoe UI, Roboto, Arial, sans-serif;
-    background:
-      linear-gradient(color-mix(in srgb, var(--bg) 87%, transparent), color-mix(in srgb, var(--bg) 87%, transparent)),
-      url('bg-photo.jpg') center/cover fixed;
+    background: var(--bg);
     color: var(--ink);
     margin: 0;
     padding: 2rem 1rem 4rem;
@@ -122,7 +120,7 @@
     margin-top: 1rem;
   }
   button:hover { background: var(--accent-bright); }
-  .error { color: #c0392b; min-height: 1.2em; margin-top: 0.5rem; }
+  .error { color: #ff9585; min-height: 1.2em; margin-top: 0.5rem; }
   #results-list { padding-left: 1.2rem; }
   #results-list li { margin-bottom: 0.6rem; line-height: 1.4; }
   #results-name { margin-bottom: 0.5rem; }
